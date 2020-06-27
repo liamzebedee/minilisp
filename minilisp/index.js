@@ -62,14 +62,14 @@ function parseSexpr(source, from = 0, d = 0) {
         }
 
         // INTEGER/FLOAT
-        const INTEGER_FLOAT_REGEX = /^[\+\-]?\d*\.?\d+(?:[Ee][\+\-]?\d+)?$/
+        const INTEGER_FLOAT_REGEX = /^[\+\-]?\d*\.?\d+(?:[Ee][\+\-]?\d+)?/
         const integerFloatMatches = char.match(INTEGER_FLOAT_REGEX)
         if(integerFloatMatches) {
             // Now we seek to match the whole number pattern.
             const match = source.slice(i).match(INTEGER_FLOAT_REGEX)
             const atom = match[0]
             items.push(atom)
-            i = i + atom.length
+            i = i + atom.length-1
             continue
         }
 
