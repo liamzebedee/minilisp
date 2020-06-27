@@ -7,11 +7,15 @@ const rl = readline.createInterface({
 
 async function run() {
     while(1) {
+        // READ.
         const line = await new Promise((res,rej) => {
             rl.question('dumblisp> ', res)
         })
-        console.log(`echo ${line}`)
-    }
+        // EVAL.
+        const res = eval(line)
+        // PRINT
+        console.log(res)
+    } // LOOP
 }
 
 run()
