@@ -38,6 +38,7 @@ function parseSexpr(source, from = 0, d = 0) {
             const res = parseSexpr(source, i + 1, d + 1)
             items.push(res.items)
             i = res.i
+            continue
         }
 
         if(char == SEXPR_END) {
@@ -74,6 +75,16 @@ function parseSexpr(source, from = 0, d = 0) {
         }
 
         // SYMBOL
+        // const SYMBOL_REGEX = /^[a-zA-Z]{0}[^\(\)\s]+/
+        const SYMBOL_REGEX = /^[^\(\)\s]{1,}/
+        const symbolMatches = char.match(SYMBOL_REGEX)
+        if(symbolMatches) {
+            const match = source.slice(i).match(SYMBOL_REGEX)
+            const atom = match[0].toUpperCase()
+            items.push(atom)
+            i = i + atom.length-1
+            continue
+        }
 
         if(char.match(/\s\r/)) continue
         if(char == "") continue
