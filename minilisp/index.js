@@ -1,7 +1,10 @@
+
+
+
 // 
 // LISP.
 // 
-
+const NIL = Symbol.for('nil')
 
 /**
  * Lists and pairs: (1 () (2 . 3) (4))
@@ -14,9 +17,9 @@
 const DBL_QUOTE_CHAR = '"'
 const SEXPR_START = "("
 const SEXPR_END = ")"
-function parseSexpr(source, from = 0) {
-    console.log(source)
 
+
+function parseSexpr(source, from = 0, d = 0) {
     // An S-Expression is a very simple form.
     // SEXPR = "(" SEXPR | ATOM ")"
     // ATOM = STRING | INTEGER | FLOAT | SYMBOL
@@ -24,26 +27,21 @@ function parseSexpr(source, from = 0) {
     // INTEGER = [-][\d]
     // FLOAT = [-][\d+][.][\d+]
     // SYMBOL = [a-zA-Z\-0-9]
-    let expr
-    let atoms = []
     let acc = ""
+    let items = []
     
-    for(let i = 0 + from; i < source.length; i++) {
+    for(let i = from; i < source.length; i++) {
         let char = source[i]
 
         // S-Expressions.
         if(char == SEXPR_START) {
-            // Find the end of this expression.
-            const endIdx = source.slice(i).lastIndexOf(SEXPR_END)
-            if(endIdx == -1) {
-                throw new Error(`error parsing s-expr "${source}", expected terminating paren )`)
-            }
+            const res = parseSexpr(source, i + 1, d + 1)
+            items.push(res.items)
+            i = res.i
+        }
 
-            const str = source.substring(i + 1, endIdx)
-            const atom = parseSexpr(str)
-            atoms.push(atom)
-            i = endIdx
-            continue
+        if(char == SEXPR_END) {
+            return { items, i }
         }
 
         // Atoms.
@@ -57,8 +55,8 @@ function parseSexpr(source, from = 0) {
                 throw new Error(`error parsing string, expected terminating quote`)
             }
             // Get the raw string, ignoring the first quote char.
-            const atom = source.substring(i + 1, endIdx)
-            atoms.push(atom)
+            const atom = source.slice(i + 1, endIdx)
+            items.push(atom)
             i = endIdx
             continue
         }
@@ -68,9 +66,9 @@ function parseSexpr(source, from = 0) {
         const integerFloatMatches = char.match(INTEGER_FLOAT_REGEX)
         if(integerFloatMatches) {
             // Now we seek to match the whole number pattern.
-            const match = source.substring(i).match(INTEGER_FLOAT_REGEX)
+            const match = source.slice(i).match(INTEGER_FLOAT_REGEX)
             const atom = match[0]
-            atoms.push(atom)
+            items.push(atom)
             i = i + atom.length
             continue
         }
@@ -78,10 +76,12 @@ function parseSexpr(source, from = 0) {
         // SYMBOL
 
         if(char.match(/\s\r/)) continue
-        if(char == "") return []
+        if(char == "") continue
     }
 
-    return atoms
+    if(d != 0) throw new Error("error parsing s-expression: missing end paren")
+
+    return items
 }
 
 const lisp = {
