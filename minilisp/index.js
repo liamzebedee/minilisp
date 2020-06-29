@@ -69,7 +69,19 @@ function parseSexpr(source, from = 0, d = 0) {
             // Now we seek to match the whole number pattern.
             const match = source.slice(i).match(INTEGER_FLOAT_REGEX)
             const atom = match[0]
-            items.push(atom)
+
+            // TODO: hack.
+            let num
+            if(
+                atom.indexOf('.') == -1 || 
+                atom.indexOf('-') == -1
+            ) {
+                num = parseFloat(atom)
+            } else num = parseInt(num)
+
+            items.push(
+                num
+            )
             i = i + atom.length-1
             continue
         }
