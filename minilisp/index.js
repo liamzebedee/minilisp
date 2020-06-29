@@ -113,7 +113,7 @@ const lisp = {
         try {
             // Parse expressions.
             const res = parseSexpr(source)
-            console.log(res)
+            console.log(inspect(res, {colors: true, depth: Infinity}))
         } catch(ex) {
             console.error(ex)
         }
