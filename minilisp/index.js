@@ -176,12 +176,15 @@ function cond() {
 
 
 
-// Returns the head of the rest of the list.
+/** Returns the second element of x. */
 const cadr = (x) => car(cdr(x))
-// Returns the second head of the rest of the list.
+/** Returns the third element of x. */
 const caddr = (x) => car(cdr(cdr(x)))
-// Returns the head of the first head of the list.
+/** Returns the first element of the first element of x. */
 const caar = (x) => car(car(x))
+/** Returns the second element of the first element of x. */
+const cadar = (x) => car(cdr(car(x)))
+
 
 /**
  * ((2 "Truthy") (t "Truthy")) ->
