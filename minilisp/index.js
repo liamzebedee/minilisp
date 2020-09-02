@@ -205,7 +205,7 @@ function evaluate(expression, environment) {
         if(type == T_BOOL) return expression
 
         if(type == T_SYMBOL) {
-
+            if(!environment[expression]) throw new Error(`unbound symbol: ${expression}`)
             // return expression
         }
         // TODO assoc(e, a)
