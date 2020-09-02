@@ -33,6 +33,15 @@ const testcases = [
     input: `(car (cdr (quote (1 2 3))))`,
     output: "2"
   },
+  {
+    input: `((lambda (x) (cons x (quote (b)))) (quote a))`,
+    output: "[ 'a', 'b' ]"
+  },
+  {
+    input: `((lambda (f) (f (quote (b c))))
+             (quote (lambda (x) (cons (quote a) x))))`,
+    output: `[ 'a', 'b', 'c' ]`
+  }
   // {
   //   input: `(pair '(x y z) '(a b c))`,
   //   output: `[[x, a], [y, b], [z, c]]`
@@ -97,5 +106,10 @@ test('evaluate', () => {
   expect(builtins.eval(['eq', 1, 1])).toEqual(true)
   expect(builtins.eval(['quote', [1, 2, 3]])).toEqual([1, 2, 3])
   expect(builtins.eval(['quote', '123'])).toEqual('123')
+  expect(builtins.eval(['quote', 'a'])).toEqual('a')
   expect(builtins.eval(['car', ['quote', [1, 2]]])).toEqual(1)
 })
+
+// test('evlist', () => {
+//   expect(builtins.evlist([])).toEqual(1)
+// })

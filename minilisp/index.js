@@ -1,5 +1,7 @@
 const {inspect} = require('util');
-
+function write(x) {
+    console.log(inspect(x, {colors: false, depth: Infinity}))
+}
 
 
 // 
@@ -146,7 +148,6 @@ function eq(x, y) {
     }
 
     if(x.length === 0 && y.length === 0) return true
-    // if(x === [] && y === []) return true
 
     return []
 }
@@ -191,7 +192,12 @@ const caar = (x) => car(car(x))
 const cadar = (x) => car(cdr(car(x)))
 
 
-
+function extendEnvironment(environment, ext) {
+    return [
+        [key, value],
+        environment
+    ]
+}
 function evaluate(expression, environment) {
     if(atom(expression) === true) {
         return assoc(expression, environment)
@@ -200,6 +206,7 @@ function evaluate(expression, environment) {
     const operator = car(expression)
     if(atom(operator) === true) {
         if(operator == 'quote') {
+            // Special evaluation.
             return cadr(expression)
         } 
         else if(operator == 'atom') {
@@ -228,6 +235,7 @@ function evaluate(expression, environment) {
             )
         }
         else if(operator == 'cond') {
+            // Special evaluation.
             return evcon(
                 evaluate(cdr(expression), environment), environment
             )
@@ -244,6 +252,32 @@ function evaluate(expression, environment) {
         }
         // else return expression
     }
+    else if(caar(expression) === 'lambda') {
+        // ((lambda (p0 ... p_i) (body)) (a_0 ... a_i))
+        // input: ((lambda (x) (cons x '(b))) 'a)
+        // output: "(a b)"
+
+        const lambdaExpr = car(expression)
+        const parameters = cadr(lambdaExpr)
+        const body = caddr(lambdaExpr)
+        const callParameters = evlist(cdr(expression), environment)
+        
+        // To perform the call, the environment is extended with the call
+        // data. (p_i -> a_i).
+        if(parameters.length !== callParameters.length) {
+            throw new Error(`lambda expects ${parameters.length} parameters, but ${callParameters.length} given`)
+        }
+        const callEnvironment = parameters.map((_, i) => {
+            return [ parameters[i], callParameters[i] ]
+        })
+
+        const environmentExtended = [
+            ...callEnvironment,
+            ...environment
+        ]
+        
+        return evaluate(body, environmentExtended)
+    }
 }
 
 // ((test-a value-a) ... (test-n value-n))
@@ -254,15 +288,19 @@ function evcon(expression, environment) {
     return evcon(cdr(expression), environment)
 }
 
+function evlist(expression, environment) {
+    if(null_(expression)) return []
+    return cons(
+        evaluate(car(expression), environment),
+        evlist(cdr(expression))
+    )
+}
 
 
-// const cond = () => {}
-
-// // Environment 2.
-
-// function _null(x) {
-//     return eq(x, [])
-// }
+// Environment 2.
+function null_(x) {
+    return eq(x, []) === true
+}
 
 // function and(x,y) {
 //     return cond(
@@ -275,10 +313,10 @@ function evcon(expression, environment) {
 // }
 
 // function not(x) {
-//     return cond(
-//         [x, []],
-//         [true, true]
-//     )
+    // return ['cond', 
+    //     [x, []],
+    //     [true, true]
+    // ]
 // }
 
 // function append(x, y) {
@@ -315,24 +353,22 @@ function evcon(expression, environment) {
 
 
 const builtins = {
-    quote: null,
+    quote: 'quote',
     atom,
     eq,
     car,
     cdr,
     cons,
-    cond: null,
-    // cond,
+    cond: 'cond',
 
-    // pair,
     assoc,
-    // apply,
     eval: evaluate,
-    evcon,
 
 
     // TODO
-    read
+    read,
+    evlist,
+    evcon
 }
 
 
