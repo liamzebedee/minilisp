@@ -73,7 +73,13 @@ test('atom', () => {
   expect(builtins.atom([1, 2, 3])).toEqual([])
 })
 
+test('evcon', () => {
+  expect(builtins.evcon([ [false, 2], [true, 1] ])).toEqual(1)
+})
+
 test('evaluate', () => {
+  expect(builtins.eval(['EQ', 1, 2])).toEqual([])
+  expect(builtins.eval(['EQ', 1, 1])).toEqual(true)
   expect(builtins.eval(['QUOTE', [1, 2, 3]])).toEqual([1, 2, 3])
   expect(builtins.eval(['QUOTE', '123'])).toEqual('123')
 })
