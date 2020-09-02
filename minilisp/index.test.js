@@ -22,15 +22,15 @@ const testcases = [
     output: `[]`
   },
   {
-    input: `(car (1 2))`,
+    input: `(car (quote (1 2)))`,
     output: "1"
   },
   {
-    input: `(car (cdr (1 2 3)))`,
+    input: `(car (cdr (quote (1 2 3))))`,
     output: "2"
   },
   {
-    input: `(car (cdr (1 2 3)))`,
+    input: `(car (cdr (quote (1 2 3))))`,
     output: "2"
   },
   // {
@@ -81,9 +81,21 @@ test('evcon', () => {
   expect(builtins.evcon([ [false, 2], [true, 1] ])).toEqual(1)
 })
 
+describe('assoc', () => {
+  test('numbers and bools', () => {
+    const env = []
+    expect(builtins.assoc(1, env)).toEqual(1)
+    expect(builtins.assoc(true, env)).toEqual(true)
+  })
+  test('core functions', () => {
+    expect(builtins.assoc('cons', dumblisp.env)).toEqual('cons')
+  })
+})
+
 test('evaluate', () => {
   expect(builtins.eval(['eq', 1, 2])).toEqual([])
   expect(builtins.eval(['eq', 1, 1])).toEqual(true)
   expect(builtins.eval(['quote', [1, 2, 3]])).toEqual([1, 2, 3])
   expect(builtins.eval(['quote', '123'])).toEqual('123')
+  expect(builtins.eval(['car', ['quote', [1, 2]]])).toEqual(1)
 })

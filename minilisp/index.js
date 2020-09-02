@@ -5,13 +5,13 @@ const {inspect} = require('util');
 // 
 // LISP.
 // 
-const NIL = Symbol.for('nil')
+const NIL = []
 
-const T_NUMBER = Symbol.for('nil')
-const T_SYMBOL = Symbol.for('nil')
-const T_BOOL = Symbol.for('nil')
+const T_NUMBER = Symbol('number')
+const T_SYMBOL = Symbol('symbol')
+const T_BOOL = Symbol('bool')
 
-function lisp_type(expr) {
+function lisp_type(x) {
     switch(typeof x) {
         case 'number': return T_NUMBER
         case 'string': return T_SYMBOL
@@ -31,8 +31,6 @@ function lisp_type(expr) {
 const DBL_QUOTE_CHAR = '"'
 const SEXPR_START = "("
 const SEXPR_END = ")"
-
-
 
 
 function read(source, from = 0, d = 0) {
@@ -125,10 +123,6 @@ function read(source, from = 0, d = 0) {
 
 
 
-function quote(x) {
-    return x
-}
-
 function atom(x) {
     if(
         typeof x == 'number' || 
@@ -138,28 +132,34 @@ function atom(x) {
     return true
 
     if(typeof x == 'object' && x.constructor.name == 'Array') {
+        // The empty list is atomic.
         if(x.length === 0) return true
+        // Else return an empty list.
         else return []
     }
 }
 
-function eq(x,y) {
+function eq(x, y) {
     // deep eq
-    if(atom(x) == true && atom(y) == true) {
+    if(atom(x) === true && atom(y) === true) {
         if(x === y) return true
     }
 
-    if(x === [] && y === []) return true
+    if(x.length === 0 && y.length === 0) return true
+    // if(x === [] && y === []) return true
 
     return []
 }
 
 function car(x) {
+    if(x.constructor.name !== 'Array') throw new Error("car expects a list")
     if(x.length === 0) return NIL
     return x[0]
 }
 
+/** Pops the head and returns the rest of the list. */
 function cdr(x) {
+    if(x.constructor.name !== 'Array') throw new Error("cdr expects a list")
     return x.slice(1)
 }
 
@@ -167,13 +167,18 @@ function cons(x, y) {
     return [x, ...y]
 }
 
-function cond() {
-    for(let arg of arguments) {
-        if(evaluate(arg[0])) return arg[1]
+function assoc(x, y) {
+    // Lookup atom in environment.
+    const type = lisp_type(x)
+    if(type == T_NUMBER) return x
+    if(type == T_BOOL) return x
+    if(type == T_SYMBOL) {
+        if(eq(caar(y), x) === true) return cadar(y)
+        else return assoc(x, cdr(y))
     }
+
+    throw new Error(`unbound symbol: ${x}`)
 }
-
-
 
 
 /** Returns the second element of x. */
@@ -186,67 +191,58 @@ const caar = (x) => car(car(x))
 const cadar = (x) => car(cdr(car(x)))
 
 
-/**
- * ((2 "Truthy") (t "Truthy")) ->
- *  ^----------- car(x)
- *     ^------- cdr(car(x))
- *      ------- car(cdr(car(x)))
- * @param {*} x 
- */
-const cadar = (x) => car(cdr(car(x)))
 
 function evaluate(expression, environment) {
     if(atom(expression) === true) {
-        if(expression == NIL) return NIL
-
-        // Lookup atom in environment.
-        let type = lisp_type(expression)
-        if(type == T_NUMBER) return expression
-        if(type == T_BOOL) return expression
-
-        if(type == T_SYMBOL) {
-            if(!environment[expression]) throw new Error(`unbound symbol: ${expression}`)
-            // return expression
-        }
-        // TODO assoc(e, a)
+        return assoc(expression, environment)
     }
  
-    const head = car(expression)
-    if(atom(head) === true) {
-        if(head == 'quote') {
+    const operator = car(expression)
+    if(atom(operator) === true) {
+        if(operator == 'quote') {
             return cadr(expression)
         } 
-        else if(head == 'atom') {
+        else if(operator == 'atom') {
             return atom(evaluate(cadr(expression), environment))
         }
-        else if(head == 'eq') {
+        else if(operator == 'eq') {
             return eq(
                 evaluate(cadr(expression), environment),
                 evaluate(caddr(expression), environment)
             )
         }
-        else if(head == 'car') {
+        else if(operator == 'car') {
             return car(
                 evaluate(cadr(expression), environment)
             )
         }
-        else if(head == 'cdr') {
+        else if(operator == 'cdr') {
             return cdr(
                 evaluate(cadr(expression), environment)
             )
         }
-        else if(head == 'cons') {
+        else if(operator == 'cons') {
             return cons(
                 evaluate(cadr(expression), environment),
                 evaluate(caddr(expression), environment)
             )
         }
-        else if(head == 'cond') {
+        else if(operator == 'cond') {
             return evcon(
                 evaluate(cdr(expression), environment), environment
             )
         }
-        else return expression
+        else {
+            const operands = cdr(expression)
+            return evaluate(
+                cons(
+                    assoc(operator, environment), 
+                    operands
+                ), 
+                environment
+            )
+        }
+        // else return expression
     }
 }
 
@@ -260,94 +256,111 @@ function evcon(expression, environment) {
 
 
 
+// const cond = () => {}
+
+// // Environment 2.
+
+// function _null(x) {
+//     return eq(x, [])
+// }
+
+// function and(x,y) {
+//     return cond(
+//         [ x, cond(
+//             [y, true], 
+//             [true, []
+//         ])],
+//         [ true, [] ]
+//     )
+// }
+
+// function not(x) {
+//     return cond(
+//         [x, []],
+//         [true, true]
+//     )
+// }
+
+// function append(x, y) {
+//     return cond(
+//         [_null(x), y],
+//         [ true, 
+//             cons([ 
+//                 car(x), 
+//                 append(cdr(x), y)
+//             ])
+//         ]
+//     )
+// }
+
+// function pair(x, y) {
+//     return 
+//     // FIXME
+//     if(and(_null(x), _null(y))) {
+//         return []
+//     } else if(not(atom(x)) && not(atom(y))) {
+//         return cons(
+//             list(car(x), car(y)),
+//             pair(cdr(x), cdr(y))
+//         )
+//     }
+// }
 
 
-// Environment 2.
 
-function _null(x) {
-    return eq(x, [])
-}
+// // (list e_1...e_n) = (cons e_1 ... (cons e_n '())
+// function list() {
+//     return Array.from(arguments)
+// }
 
-function and(x,y) {
-    return cond(
-        [ x, cond(
-            [y, true], 
-            [true, []
-        ])],
-        [ true, [] ]
-    )
-}
-
-function not(x) {
-    return cond(
-        [x, []],
-        [true, true]
-    )
-}
-
-function append(x, y) {
-    return cond(
-        [_null(x), y],
-        [ true, 
-            cons([ 
-                car(x), 
-                append(cdr(x), y)
-            ])
-        ]
-    )
-}
-
-function pair(x, y) {
-    if(and(_null(x), _null(y))) {
-        return []
-    } else if(not(atom(x)) && not(atom(y))) {
-        return cons(
-            list(car(x), car(y)),
-            pair(cdr(x), cdr(y))
-        )
-    }
-}
-
-function assoc() {
-
-}
-
-// (list e_1...e_n) = (cons e_1 ... (cons e_n '())
-function list() {
-    return Array.from(arguments)
-}
 
 const builtins = {
-    quote,
+    quote: null,
     atom,
     eq,
     car,
     cdr,
     cons,
-    cond,
+    cond: null,
+    // cond,
 
-    pair,
+    // pair,
     assoc,
     // apply,
-    eval: evaluate
+    eval: evaluate,
+    evcon,
+
+
+    // TODO
+    read
 }
 
 
 
+const env = Object.entries(builtins).map(([k, v]) => {
+    if(typeof v === 'function') return [k, k]
+    else return [k, v]
+})
+
+function run(source) {
+    // Reader algorithm.
+    try {
+        // Read.
+        const expr = read(source)
+        // Evaluate.
+        const returnValue = evaluate(expr[0], env)
+        // Print.
+        const returnValueAsString = inspect(returnValue, {colors: false, depth: Infinity})
+        return returnValueAsString
+    } catch(ex) {
+        console.error(ex)
+    }
+}
+
 const dumblisp = {
-    eval_: function(source) {
-        // Reader algorithm.
-        try {
-            // Parse expressions.
-            const expr = read(source)
-            const returnValue = evaluate(expr[0], builtins)
-            const returnValueAsString = inspect(returnValue, {colors: false, depth: Infinity})
-            return returnValueAsString
-        } catch(ex) {
-            console.error(ex)
-        }
-    },
-    builtins
+    eval_: run,
+    builtins,
+    env
 }
 
 
