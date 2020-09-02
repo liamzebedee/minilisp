@@ -1,0 +1,10 @@
+{
+  "name": "dumblisp",
+  "scripts": {
+    "repl": "node repl.js",
+    "test": "jest --no-watchman"
+  },
+  "devDependencies": {
+    "jest": "^26.4.2"
+  }
+}

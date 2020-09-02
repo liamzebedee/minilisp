@@ -1,3 +1,4 @@
+const {inspect} = require('util');
 
 
 
@@ -19,7 +20,9 @@ const SEXPR_START = "("
 const SEXPR_END = ")"
 
 
-function parseSexpr(source, from = 0, d = 0) {
+
+
+function read(source, from = 0, d = 0) {
     // An S-Expression is a very simple form.
     // SEXPR = "(" SEXPR | ATOM ")"
     // ATOM = STRING | INTEGER | FLOAT | SYMBOL
@@ -35,7 +38,7 @@ function parseSexpr(source, from = 0, d = 0) {
 
         // S-Expressions.
         if(char == SEXPR_START) {
-            const res = parseSexpr(source, i + 1, d + 1)
+            const res = read(source, i + 1, d + 1)
             items.push(res.items)
             i = res.i
             continue
@@ -107,49 +110,218 @@ function parseSexpr(source, from = 0, d = 0) {
     return items
 }
 
-const lisp = {
-    eval: function(source) {
-        // Reader algorithm.
-        try {
-            // Parse expressions.
-            const res = parseSexpr(source)
-            console.log(inspect(res, {colors: true, depth: Infinity}))
-        } catch(ex) {
-            console.error(ex)
-        }
+
+
+function quote(x) {
+    return x
+}
+
+function atom(x) {
+    if(
+        typeof x == 'number' || 
+        typeof x == 'string' ||
+        typeof x == 'boolean' || 
+        x == NIL) 
+    return true
+
+    if(typeof x == 'object' && x.constructor.name == 'Array') {
+        if(x.length === 0) return true
+        else return []
     }
 }
 
-// 
-// REPL.
-// 
+function eq(x,y) {
+    // deep eq
+    if(atom(x) == true && atom(y) == true) {
+        if(x === y) return true
+    }
 
-const readline = require('readline')
+    if(x === [] && y === []) return true
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-})
-
-async function run() {
-    while(1) {
-        // READ.
-        const line = await new Promise((res,rej) => {
-            rl.question('dumblisp> ', res)
-        })
-        // EVAL.
-        with(lisp) {
-            const res = eval(line)
-            // PRINT
-            console.log(res)
-        }
-    } // LOOP
+    return []
 }
 
-run()
+function car(x) {
+    if(x.length === 0) return NIL
+    return x[0]
+}
 
-process.on('SIGINT', function() {
-    rl.close()
-    process.exit(0)
-})
+function cdr(x) {
+    return x.slice(1)
+}
 
+function cons(x, y) {
+    return [x, ...y]
+}
+
+function cond() {
+    for(let arg of arguments) {
+        if(evaluate(arg[0])) return arg[1]
+    }
+}
+
+
+
+
+// Returns the head of the rest of the list.
+const cadr = (x) => car(cdr(x))
+// Returns the second head of the rest of the list.
+const caddr = (x) => car(cdr(cdr(x)))
+// Returns the head of the first head of the list.
+const caar = (x) => car(car(x))
+
+/**
+ * ((2 "Truthy") (t "Truthy")) ->
+ *  ^----------- car(x)
+ *     ^------- cdr(car(x))
+ *      ------- car(cdr(car(x)))
+ * @param {*} x 
+ */
+const cadar = (x) => car(cdr(car(x)))
+
+function evaluate(expression, environment) {
+    if(expression == NIL) return NIL
+
+    const head = car(expression)
+    if(atom(head)) {
+        if(head == 'QUOTE') {
+            return cadr(expression)
+        } 
+        else if(head == 'ATOM') {
+            return atom(evaluate(cadr(expression), environment))
+        }
+        else if(head == 'EQ') {
+            return eq(
+                evaluate(cadr(expression), environment),
+                evaluate(caddr(expression), environment)
+            )
+        }
+        else if(head == 'CAR') {
+            return car(
+                evaluate(cadr(expression), environment)
+            )
+        }
+        else if(head == 'CDR') {
+            return cdr(
+                evaluate(cadr(expression), environment)
+            )
+        }
+        else if(head == 'CONS') {
+            return cons(
+                evaluate(cadr(expression), environment),
+                evaluate(caddr(expression), environment)
+            )
+        }
+        else if(head == 'COND') {
+            return evcon(
+                evaluate(cdr(expression), environment), environment
+            )
+        }
+        
+    }
+
+    return expression
+}
+
+// ((test-a value-a) ... (test-n value-n))
+function evcon(expression, environment) {
+    return cond(
+        [ evaluate(caar(expression), environment), cadar(expression) ],
+        [ true, evcon(cdr(expression), environment) ]
+    )
+}
+
+
+
+
+
+// Environment 2.
+
+function _null(x) {
+    return eq(x, [])
+}
+
+function and(x,y) {
+    return cond(
+        [ x, cond(
+            [y, true], 
+            [true, []
+        ])],
+        [ true, [] ]
+    )
+}
+
+function not(x) {
+    return cond(
+        [x, []],
+        [true, true]
+    )
+}
+
+function append(x, y) {
+    return cond(
+        [_null(x), y],
+        [ true, 
+            cons([ 
+                car(x), 
+                append(cdr(x), y)
+            ])
+        ]
+    )
+}
+
+function pair(x, y) {
+    if(and(_null(x), _null(y))) {
+        return []
+    } else if(not(atom(x)) && not(atom(y))) {
+        return cons(
+            list(car(x), car(y)),
+            pair(cdr(x), cdr(y))
+        )
+    }
+}
+
+function assoc() {
+
+}
+
+// (list e_1...e_n) = (cons e_1 ... (cons e_n '())
+function list() {
+    return Array.from(arguments)
+}
+
+const builtins = {
+    quote,
+    atom,
+    eq,
+    car,
+    cdr,
+    cons,
+    cond,
+
+    pair,
+    assoc,
+    // apply,
+    eval: evaluate
+}
+
+
+
+const dumblisp = {
+    eval_: function(source) {
+        // Reader algorithm.
+        try {
+            // Parse expressions.
+            const expr = read(source)
+            const returnValue = evaluate(expr[0], builtins)
+            const returnValueAsString = inspect(returnValue, {colors: false, depth: Infinity})
+            return returnValueAsString
+        } catch(ex) {
+            console.error(ex)
+        }
+    },
+    builtins
+}
+
+
+module.exports = dumblisp
