@@ -108,7 +108,7 @@ function read(source, from = 0, d = 0) {
         const symbolMatches = char.match(SYMBOL_REGEX)
         if(symbolMatches) {
             const match = source.slice(i).match(SYMBOL_REGEX)
-            const atom = match[0].toUpperCase()
+            const atom = match[0].toLowerCase()
             items.push(atom)
             i = i + atom.length-1
             continue
@@ -213,43 +213,41 @@ function evaluate(expression, environment) {
  
     const head = car(expression)
     if(atom(head) === true) {
-        if(head == 'QUOTE') {
+        if(head == 'quote') {
             return cadr(expression)
         } 
-        else if(head == 'ATOM') {
+        else if(head == 'atom') {
             return atom(evaluate(cadr(expression), environment))
         }
-        else if(head == 'EQ') {
+        else if(head == 'eq') {
             return eq(
                 evaluate(cadr(expression), environment),
                 evaluate(caddr(expression), environment)
             )
         }
-        else if(head == 'CAR') {
+        else if(head == 'car') {
             return car(
                 evaluate(cadr(expression), environment)
             )
         }
-        else if(head == 'CDR') {
+        else if(head == 'cdr') {
             return cdr(
                 evaluate(cadr(expression), environment)
             )
         }
-        else if(head == 'CONS') {
+        else if(head == 'cons') {
             return cons(
                 evaluate(cadr(expression), environment),
                 evaluate(caddr(expression), environment)
             )
         }
-        else if(head == 'COND') {
+        else if(head == 'cond') {
             return evcon(
                 evaluate(cdr(expression), environment), environment
             )
         }
-        
+        else return expression
     }
-
-    return expression
 }
 
 // ((test-a value-a) ... (test-n value-n))
