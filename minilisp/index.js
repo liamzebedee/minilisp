@@ -254,10 +254,10 @@ function evaluate(expression, environment) {
 
 // ((test-a value-a) ... (test-n value-n))
 function evcon(expression, environment) {
-    return cond(
-        [ evaluate(caar(expression), environment), cadar(expression) ],
-        [ true, evcon(cdr(expression), environment) ]
-    )
+    if(evaluate(caar(expression), environment)) {
+        return cadar(expression)
+    }
+    return evcon(cdr(expression), environment)
 }
 
 
