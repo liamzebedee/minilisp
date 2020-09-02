@@ -7,6 +7,19 @@ const {inspect} = require('util');
 // 
 const NIL = Symbol.for('nil')
 
+const T_NUMBER = Symbol.for('nil')
+const T_SYMBOL = Symbol.for('nil')
+const T_BOOL = Symbol.for('nil')
+
+function lisp_type(expr) {
+    switch(typeof x) {
+        case 'number': return T_NUMBER
+        case 'string': return T_SYMBOL
+        case 'boolean': return T_BOOL
+        default: return NIL
+    }
+}
+
 /**
  * Lists and pairs: (1 () (2 . 3) (4))
  * Symbols: with-hyphen ?@!$ a\ symbol\ with\ spaces
@@ -180,10 +193,23 @@ const caar = (x) => car(car(x))
 const cadar = (x) => car(cdr(car(x)))
 
 function evaluate(expression, environment) {
-    if(expression == NIL) return NIL
+    if(atom(expression) === true) {
+        if(expression == NIL) return NIL
 
+        // Lookup atom in environment.
+        let type = lisp_type(expression)
+        if(type == T_NUMBER) return expression
+        if(type == T_BOOL) return expression
+
+        if(type == T_SYMBOL) {
+
+            // return expression
+        }
+        // TODO assoc(e, a)
+    }
+ 
     const head = car(expression)
-    if(atom(head)) {
+    if(atom(head) === true) {
         if(head == 'QUOTE') {
             return cadr(expression)
         } 
