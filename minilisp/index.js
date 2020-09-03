@@ -158,9 +158,10 @@ function car(x) {
     return x[0]
 }
 
-/** Pops the head and returns the rest of the list. */
+/** Pops the head and returns the rest of x. */
 function cdr(x) {
     if(x.constructor.name !== 'Array') throw new Error("cdr expects a list")
+    if(x.length === 0) return NIL
     return x.slice(1)
 }
 
@@ -198,37 +199,57 @@ function extendEnvironment(environment, ext) {
         environment
     ]
 }
-function evaluate(expression, environment) {
+function evaluate(expression, environment = env) {
+    if(!environment) throw new Error("environment undefined")
+
     if(atom(expression) === true) {
         return assoc(expression, environment)
     }
- 
+
     const operator = car(expression)
     if(atom(operator) === true) {
         if(operator == 'quote') {
             // Special evaluation.
+            if(expression.length !== 2) {
+                throw new Error(`quote expects 1 arguments, ${expression.length - 1} given`)
+            }
             return cadr(expression)
         } 
         else if(operator == 'atom') {
+            if(expression.length !== 2) {
+                throw new Error(`atom expects 1 argument, ${expression.length - 1} given`)
+            }
             return atom(evaluate(cadr(expression), environment))
         }
         else if(operator == 'eq') {
+            if(expression.length !== 3) {
+                throw new Error(`eq expects 2 arguments, ${expression.length - 1} given`)
+            }
             return eq(
                 evaluate(cadr(expression), environment),
                 evaluate(caddr(expression), environment)
             )
         }
         else if(operator == 'car') {
+            if(expression.length !== 2) {
+                throw new Error(`car expects 1 argument, ${expression.length - 1} given`)
+            }
             return car(
                 evaluate(cadr(expression), environment)
             )
         }
         else if(operator == 'cdr') {
+            if(expression.length !== 2) {
+                throw new Error(`cdr expects 1 argument, ${expression.length - 1} given`)
+            }
             return cdr(
                 evaluate(cadr(expression), environment)
             )
         }
         else if(operator == 'cons') {
+            if(expression.length !== 3) {
+                throw new Error(`cons expects 2 arguments, ${expression.length - 1} given`)
+            }
             return cons(
                 evaluate(cadr(expression), environment),
                 evaluate(caddr(expression), environment)
@@ -237,7 +258,8 @@ function evaluate(expression, environment) {
         else if(operator == 'cond') {
             // Special evaluation.
             return evcon(
-                evaluate(cdr(expression), environment), environment
+                evaluate(cdr(expression), environment), 
+                environment
             )
         }
         else {
@@ -282,6 +304,7 @@ function evaluate(expression, environment) {
 
 // ((test-a value-a) ... (test-n value-n))
 function evcon(expression, environment) {
+    if(!environment) throw new Error("environment undefined")
     if(evaluate(caar(expression), environment)) {
         return cadar(expression)
     }
@@ -289,7 +312,7 @@ function evcon(expression, environment) {
 }
 
 function evlist(expression, environment) {
-    if(null_(expression)) return []
+    if(!environment) throw new Error("environment undefined")
     return cons(
         evaluate(car(expression), environment),
         evlist(cdr(expression))
