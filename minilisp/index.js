@@ -1,8 +1,8 @@
-const {inspect} = require('util');
-function write(x) {
-    console.log(inspect(x, {colors: false, depth: Infinity}))
-}
+const { inspect } = require('util');
 
+function writeexpr(x) {
+    return inspect(x, {colors: false, depth: Infinity})
+}
 
 // 
 // LISP.
