@@ -2,9 +2,17 @@
   "name": "dumblisp",
   "scripts": {
     "repl": "node repl.js",
-    "test": "jest --no-watchman"
+    "test": "jest --no-watchman",
+    "test:debug": "node --inspect node_modules/.bin/jest --no-watchman --runInBand"
   },
   "devDependencies": {
+    "@babel/core": "^7.11.6",
+    "@babel/preset-env": "^7.11.5",
+    "@babel/preset-typescript": "^7.10.4",
+    "babel-jest": "^26.3.0",
     "jest": "^26.4.2"
+  },
+  "dependencies": {
+    "typescript": "^4.0.2"
   }
 }
