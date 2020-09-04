@@ -328,7 +328,7 @@ function evaluate(expression, environment = env) {
 function evcon(expression, environment) {
     if(!environment) throw new Error("environment undefined")
     if(evaluate(caar(expression), environment) === true) {
-        return cadar(expression)
+        return evaluate(cadar(expression), environment)
     }
     return evcon(cdr(expression), environment)
 }
