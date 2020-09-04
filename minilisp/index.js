@@ -262,6 +262,20 @@ function evaluate(expression, environment = env) {
                 environment
             )
         }
+        // Arithmetic built-ins.
+        else if(operator == '+') {
+            const operands = evlist(cdr(expression), environment)
+            return add(operands)
+        }
+        else if(operator == '-') {
+            const operands = evlist(cdr(expression), environment)
+            return subtract(operands)
+        }
+        else if(operator == 'write') {
+            const operands = cdr(expression)
+            const v = evaluate(operands, environment)
+            return v
+        }
         else {
             const operands = cdr(expression)
             return evaluate(
@@ -324,55 +338,12 @@ function evlist(expression, environment) {
 function null_(x) {
     return eq(x, []) === true
 }
-
-// function and(x,y) {
-//     return cond(
-//         [ x, cond(
-//             [y, true], 
-//             [true, []
-//         ])],
-//         [ true, [] ]
-//     )
-// }
-
-// function not(x) {
-    // return ['cond', 
-    //     [x, []],
-    //     [true, true]
-    // ]
-// }
-
-// function append(x, y) {
-//     return cond(
-//         [_null(x), y],
-//         [ true, 
-//             cons([ 
-//                 car(x), 
-//                 append(cdr(x), y)
-//             ])
-//         ]
-//     )
-// }
-
-// function pair(x, y) {
-//     return 
-//     // FIXME
-//     if(and(_null(x), _null(y))) {
-//         return []
-//     } else if(not(atom(x)) && not(atom(y))) {
-//         return cons(
-//             list(car(x), car(y)),
-//             pair(cdr(x), cdr(y))
-//         )
-//     }
-// }
-
-
-
-// // (list e_1...e_n) = (cons e_1 ... (cons e_n '())
-// function list() {
-//     return Array.from(arguments)
-// }
+function add(args) {
+    return args.reduce((acc, x) => acc + x, 0)
+}
+function subtract(args) {
+    return cdr(args).reduce((acc, x) => acc - x, car(args))
+}
 
 
 const builtins = {
@@ -385,7 +356,9 @@ const builtins = {
     cond: 'cond',
 
     assoc,
-    eval: evaluate,
+    '+': add,
+    '-': subtract,
+    '=': eq,
 
 
     // TODO
