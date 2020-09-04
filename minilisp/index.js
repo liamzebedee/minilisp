@@ -109,7 +109,11 @@ function read(source, from = 0, d = 0) {
         if(symbolMatches) {
             const match = source.slice(i).match(SYMBOL_REGEX)
             const atom = match[0].toLowerCase()
-            items.push(atom)
+            // TODO: refactor
+            if(atom === 't') items.push(true)
+            else if(atom === 'nil') items.push(NIL)
+            else items.push(atom)
+
             i = i + atom.length-1
             continue
         }
