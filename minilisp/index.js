@@ -337,7 +337,7 @@ function evlist(expression, environment) {
     if(!environment) throw new Error("environment undefined")
     return cons(
         evaluate(car(expression), environment),
-        evlist(cdr(expression))
+        evlist(cdr(expression), environment)
     )
 }
 
