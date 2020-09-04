@@ -229,7 +229,7 @@ function evaluate(expression, environment = env) {
             }
             return atom(evaluate(cadr(expression), environment))
         }
-        else if(operator == 'eq') {
+        else if(operator == 'eq' || operator === '=') {
             if(expression.length !== 3) {
                 throw new Error(`eq expects 2 arguments, ${expression.length - 1} given`)
             }
