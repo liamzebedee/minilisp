@@ -165,7 +165,7 @@ describe('label', () => {
 ((label range (lambda (n) 
     (cond 
         ((= n 0) nil) 
-        (t (cons n (range (- n 1))))))) 5)
+        (t (cons n (range (- n 1))))))) 100)
 `
     expect(dumblisp.evalLabel(dumblisp.read(code)[0], dumblisp.env)).toEqual([5, 4, 3, 2, 1])
   })
