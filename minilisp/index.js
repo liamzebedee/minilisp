@@ -327,6 +327,9 @@ function evaluate(expression, environment = env) {
 // ((test-a value-a) ... (test-n value-n))
 function evcon(expression, environment) {
     if(!environment) throw new Error("environment undefined")
+    if(null_(expression)) return NIL // TODO
+
+    console.debug(`evcon: ${writeexpr(caar(expression))}`)
     if(evaluate(caar(expression), environment) === true) {
         return evaluate(cadar(expression), environment)
     }
@@ -335,6 +338,7 @@ function evcon(expression, environment) {
 
 function evlist(expression, environment) {
     if(!environment) throw new Error("environment undefined")
+    if(null_(expression)) return NIL
     return cons(
         evaluate(car(expression), environment),
         evlist(cdr(expression), environment)
