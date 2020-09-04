@@ -318,6 +318,8 @@ function evaluate(expression, environment = env) {
             )
         }
     }
+    else if(caar(expression) === 'label') {
+        return evalLabel(expression, environment)
     }
     else if(caar(expression) === 'lambda') {
         // ((lambda (p0 ... p_i) (body)) (a_0 ... a_i))
@@ -343,8 +345,31 @@ function evaluate(expression, environment = env) {
             ...environment
         ]
         
-        return evaluate(body, environmentExtended)
+
+function evalLabel(expression, environment) {
+    // ((label f (lambda (p0 ... p_i) body)) (a_0 ... a_i))
+    const labelExpr = car(expression)
+
+    if(labelExpr.length !== 3) {
+        throw new Error(`label expects 3 parts, ${labelExpr.length} found`)
     }
+    const environmentExtended = [
+        [labelExpr[1], labelExpr],
+        ...environment
+    ]
+    
+    console.debug(`evalLabel: ${writeexpr(cons(
+        car(cdr(cdr(car(expression)))), 
+        cdr(expression)
+    ))}`)
+
+    return evaluate(
+        cons(
+            car(cdr(cdr(car(expression)))), 
+            cdr(expression)
+        ),
+        environmentExtended
+    )
 }
 
 // ((test-a value-a) ... (test-n value-n))
