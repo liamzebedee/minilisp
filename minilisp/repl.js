@@ -21,12 +21,10 @@ async function run() {
             rl.question('dumblisp> ', res)
         })
         // EVAL.
-        with(dumblisp) {
-            console.log(line)
-            const res = eval_(line)
-            // PRINT
-            console.log(res)
-        }
+        console.log(line)
+        const res = dumblisp.run(line)
+        // PRINT
+        console.log(res)
     } // LOOP
 }
 
