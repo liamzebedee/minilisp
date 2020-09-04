@@ -200,12 +200,17 @@ const caar = (x) => car(car(x))
 /** Returns the second element of the first element of x. */
 const cadar = (x) => car(cdr(car(x)))
 
-
-function extendEnvironment(environment, ext) {
-    return [
-        [key, value],
-        environment
-    ]
+function selfevaluating(x) {
+    const type = lisp_type(x)
+    // Self-evaluating types.
+    if(type == T_NUMBER) return true
+    if(type == T_BOOL) return true
+    if(eq(x, NIL) === true) {
+        return true
+    }
+    
+    
+    return false
 }
 function evaluate(expression, environment = env) {
     if(!environment) throw new Error("environment undefined")
@@ -285,16 +290,34 @@ function evaluate(expression, environment = env) {
             return v
         }
         else {
-            const operands = cdr(expression)
+            // We are evaluating a function call of the form (f a0 ... a_i).
+            // We substitute the symbol f for its value, and evaluate the expression.
+
+            // McCarthy's original paper used a definition including evlist:
+            // eval(cons(
+            //     assoc(car(e), a),
+            //     evlist(cdr(e), a)), a)
+            // PG appears to have simplified this definition, instead relying on
+            // lambda to perform operand evaluation.
+            // There's some philosophical distinction here of apply/eval, which I
+            // haven't yet learnt about. Just noting it down for now.
+            const symbolValue = assoc(operator, environment)
+            console.debug(`funcall:\n ${writeexpr({ expression, environment })}`)
+            if(selfevaluating(operator) === true) {
+                // If a self-evaluating object is evaluated, it yields itself as its only value
+                return operator
+            }
+            if(eq(symbolValue, NIL) === true) throw new Error(`unbound symbol: ${operator}`)
+            
             return evaluate(
                 cons(
-                    assoc(operator, environment), 
-                    operands
-                ), 
+                    assoc(operator, environment),
+                    cdr(expression)
+                ),
                 environment
             )
         }
-        // else return expression
+    }
     }
     else if(caar(expression) === 'lambda') {
         // ((lambda (p0 ... p_i) (body)) (a_0 ... a_i))
