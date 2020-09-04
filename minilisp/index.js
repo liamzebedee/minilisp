@@ -174,18 +174,22 @@ function cons(x, y) {
 }
 
 function assoc(x, y) {
-    // Lookup atom in environment.
+    // Numbers, booleans and nil are mapped to themselves.
     const type = lisp_type(x)
     if(type == T_NUMBER) return x
     if(type == T_BOOL) return x
-    if(type == T_SYMBOL) {
-        if(eq(caar(y), x) === true) return cadar(y)
-        else return assoc(x, cdr(y))
+    if(eq(x, NIL) === true) {
+        return x
     }
 
-    throw new Error(`unbound symbol: ${x}`)
-}
+    // Otherwise, lookup symbol in environment.
+    let match = false
+    for(let i = 0; i < y.length; i++) {
+        if(eq(x, y[i][0]) === true) return y[i][1]
+    }
 
+    return NIL
+}
 
 /** Returns the second element of x. */
 const cadr = (x) => car(cdr(x))
