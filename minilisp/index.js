@@ -127,8 +127,6 @@ function read(source, from = 0, d = 0) {
     return items
 }
 
-
-
 function atom(x) {
     if(
         typeof x == 'number' || 
@@ -156,6 +154,7 @@ function eq(x, y) {
     return []
 }
 
+/** Returns the first element of x. */
 function car(x) {
     if(x.constructor.name !== 'Array') throw new Error("car expects a list")
     if(x.length === 0) return NIL
@@ -191,6 +190,7 @@ function assoc(x, y) {
     return NIL
 }
 
+
 /** Returns the second element of x. */
 const cadr = (x) => car(cdr(x))
 /** Returns the third element of x. */
@@ -212,17 +212,17 @@ function selfevaluating(x) {
     
     return false
 }
+
 function evaluate(expression, environment = env) {
     if(!environment) throw new Error("environment undefined")
 
     if(atom(expression) === true) {
         return assoc(expression, environment)
     }
-
+    
     const operator = car(expression)
     if(atom(operator) === true) {
         if(operator == 'quote') {
-            // Special evaluation.
             if(expression.length !== 2) {
                 throw new Error(`quote expects 1 arguments, ${expression.length - 1} given`)
             }
@@ -232,7 +232,9 @@ function evaluate(expression, environment = env) {
             if(expression.length !== 2) {
                 throw new Error(`atom expects 1 argument, ${expression.length - 1} given`)
             }
-            return atom(evaluate(cadr(expression), environment))
+            return atom(
+                evaluate(cadr(expression), environment)
+            )
         }
         else if(operator == 'eq' || operator === '=') {
             if(expression.length !== 3) {
@@ -260,6 +262,10 @@ function evaluate(expression, environment = env) {
             )
         }
         else if(operator == 'cons') {
+            console.debug(`cons:\n ${writeexpr(
+                cadr(expression),
+                caddr(expression)
+            )}`)
             if(expression.length !== 3) {
                 throw new Error(`cons expects 2 arguments, ${expression.length - 1} given`)
             }
@@ -269,9 +275,9 @@ function evaluate(expression, environment = env) {
             )
         }
         else if(operator == 'cond') {
-            // Special evaluation.
+            console.debug(`cond:\n ${writeexpr(cdr(expression))}`)
             return evcon(
-                evaluate(cdr(expression), environment), 
+                cdr(expression), 
                 environment
             )
         }
@@ -323,9 +329,6 @@ function evaluate(expression, environment = env) {
     }
     else if(caar(expression) === 'lambda') {
         // ((lambda (p0 ... p_i) (body)) (a_0 ... a_i))
-        // input: ((lambda (x) (cons x '(b))) 'a)
-        // output: "(a b)"
-
         const lambdaExpr = car(expression)
         const parameters = cadr(lambdaExpr)
         const body = caddr(lambdaExpr)
@@ -344,7 +347,17 @@ function evaluate(expression, environment = env) {
             ...callEnvironment,
             ...environment
         ]
+        console.debug('env:', environmentExtended)
+
+        console.debug(`lambda:\n ${writeexpr(body)}`)
         
+        return evaluate(
+            body, 
+            environmentExtended
+        )
+    }
+    throw new Error(`cannot evaluate expression: \n${writeexpr(expression)}`)
+}
 
 function evalLabel(expression, environment) {
     // ((label f (lambda (p0 ... p_i) body)) (a_0 ... a_i))
@@ -394,7 +407,7 @@ function evlist(expression, environment) {
 }
 
 
-// Environment 2.
+
 function null_(x) {
     return eq(x, []) === true
 }
@@ -405,7 +418,6 @@ function subtract(args) {
     return cdr(args).reduce((acc, x) => acc - x, car(args))
 }
 
-
 const builtins = {
     quote: 'quote',
     atom,
@@ -414,6 +426,7 @@ const builtins = {
     cdr,
     cons,
     cond: 'cond',
+    assoc,
 
     '+': add,
     '-': subtract,
@@ -427,15 +440,17 @@ const builtins = {
     // TODO
     read,
     evlist,
-    evcon
+    evcon,
+    null_,
 }
 
 
 
 const env = Object.entries(builtins).map(([k, v]) => {
     if(typeof v === 'function') return [k, k]
-    else return [k, v]
+    return [k, v]
 })
+
 
 function run(source) {
     // Reader algorithm.
@@ -453,9 +468,15 @@ function run(source) {
 }
 
 const dumblisp = {
-    eval_: run,
+    read,
+    evaluate: (x) => evaluate(x, env),
+    evalLabel,
+    run,
     builtins,
-    env
+    env,
+    types: {
+        NIL
+    }
 }
 
 
