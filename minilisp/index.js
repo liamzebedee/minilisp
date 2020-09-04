@@ -367,10 +367,13 @@ const builtins = {
     cons,
     cond: 'cond',
 
-    assoc,
     '+': add,
     '-': subtract,
     '=': eq,
+
+    'nil': NIL,
+    't': true,
+    'f': false,
 
 
     // TODO
